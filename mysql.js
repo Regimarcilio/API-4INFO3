@@ -1,47 +1,61 @@
 import mysql from 'mysql2/promise';
 
 const conexao = async () => {
-  const con = await mysql.createConnection({
-    host: 'localhost',
-    port: 3306,
-    user: 'root',
-    password: '123456',
-    database: '4info3'    
-  });
+    const con = await mysql.createConnection({
+        host: 'localhost',
+        port: 3306,
+        user: 'root',
+        password: '123456',
+        database: '4info3'
+    });
 
     return con;
 }
 
-const getUsuario = async (id=undefined) => {    
+const getUsuarios = async (con) => await con.query('SELECT * FROM usuarios;');
+const getUsuario = async (con, user) => await con.query('SELECT * FROM usuarios WHERE id=?;', [user.id]);
+
+const createUsuario = async (user) => {
     const con = await conexao();
-    let dados;
-
-    if(!id) {
-        const dados = await con.query('SELECT * FROM usuarios;');
-        }else {
-        const dados = await con.query('SELECT * FROM usuarios WHERE id = ?;', [id]);
-        con.close();
-        return dados[0];
-    }
-
-}
-
-const createUsuario = async (nome, email) => {
-    const con = await conexao();
-    const dados = await con.query('INSERT INTO usuarios (nome, email) VALUES (?, ?);', [nome, email]);
+    await con.query(
+        'INSERT INTO usuarios (nome, email) VALUES (?, ?);',
+        [user.nome, user.email]
+    );
 
     con.close();
-    return `Usuario ${nome} adicionado ao SQL!`;
+    return `Usuário ${user.nome} adicionado ao MySQL!`;
 }
 
 const deleteUsuario = async (id) => {
     const con = await conexao();
-    const dados = await con.query('DELETE FROM usuarios WHERE id = ?;', [id]);
-    
+    await con.query('DELETE FROM usuarios WHERE id=?', [id]);
+
     con.close();
-    return `Usuario com ID ${id} removido do SQL!`;
+    return `Usuário ${id} deletado do MySQL!`;
 }
 
-console.log(await getUsuario(2));
-console.log(await createUsuario('João', 'joao@example.com'));
-console.log(await deleteUsuario(2));
+const attUsuario = async (user, id) => {
+    const con = await conexao();
+    await con.query(
+        'UPDATE usuarios SET nome = ?,  email = ? WHERE id = ?',
+        [user.nome, user.email, id]
+    );
+
+    con.close();
+    return `Usuário ${user.nome} atualizado no MySQL!`;
+}
+
+const manipularSQl = async (user, callback) => {
+    let resultado;
+    try {
+        const con = await conexao();
+        resultado = await callback(con, user);
+        con.close();
+    } catch (e) {
+        resultado = `Ocorreu um erro: ${e.message}`;
+    } finally {
+        return resultado;
+    }
+}
+
+console.log(await manipularSQl({}, getUsuarios));
