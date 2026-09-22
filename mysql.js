@@ -29,10 +29,19 @@ const getUsuario = async (id=undefined) => {
 const createUsuario = async (nome, email) => {
     const con = await conexao();
     const dados = await con.query('INSERT INTO usuarios (nome, email) VALUES (?, ?);', [nome, email]);
-    
+
     con.close();
     return `Usuario ${nome} adicionado ao SQL!`;
 }
 
+const deleteUsuario = async (id) => {
+    const con = await conexao();
+    const dados = await con.query('DELETE FROM usuarios WHERE id = ?;', [id]);
+    
+    con.close();
+    return `Usuario com ID ${id} removido do SQL!`;
+}
+
 console.log(await getUsuario(2));
 console.log(await createUsuario('João', 'joao@example.com'));
+console.log(await deleteUsuario(2));
